@@ -1,94 +1,119 @@
-// Mock login validation
-const loginForm = document.getElementById('login-form');
-const blogContainer = document.getElementById('blog-container');
-const loginBox = document.getElementById('login-box');
-const greeting = document.getElementById('greeting');
+// Sample posts data
+let posts = [];
+let currentUser = null;
 
-let currentUser = '';
+// Simulate login
+function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  currentUser = document.getElementById('username').value;
-  loginBox.classList.add('hidden');
-  blogContainer.classList.remove('hidden');
-  greeting.innerHTML = `Welcome, ${currentUser}`;
-});
+    // Here, any username and password will allow access
+    if (username && password) {
+        currentUser = username; // Store current user
 
-// Tabs switching functionality
-const communityPostsTab = document.getElementById('community-posts-tab');
-const myPostsTab = document.getElementById('my-posts-tab');
-const communityPosts = document.getElementById('community-posts');
-const myPosts = document.getElementById('my-posts');
+        // Hide the login box
+        document.getElementById("login-container").style.display = "none";
 
-communityPostsTab.addEventListener('click', () => {
-  communityPosts.classList.remove('hidden');
-  myPosts.classList.add('hidden');
-});
-
-myPostsTab.addEventListener('click', () => {
-  myPosts.classList.remove('hidden');
-  communityPosts.classList.add('hidden');
-});
-
-// Add post functionality
-const addPostBtn = document.getElementById('add-post-btn');
-const addPostBox = document.getElementById('add-post-box');
-const cancelPostBtn = document.getElementById('cancel-post-btn');
-const addPostForm = document.getElementById('add-post-form');
-const communityPostsList = document.getElementById('community-posts-list');
-const myPostsList = document.getElementById('my-posts-list');
-
-addPostBtn.addEventListener('click', () => {
-  addPostBox.classList.remove('hidden');
-});
-
-cancelPostBtn.addEventListener('click', () => {
-  addPostBox.classList.add('hidden');
-});
-
-addPostForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const postContent = document.getElementById('post-content').value;
-
-  // Create new post element
-  const post = createPostElement(currentUser, postContent);
-
-  // Add to community and my posts
-  communityPostsList.appendChild(post.cloneNode(true));
-  myPostsList.appendChild(post);
-
-  // Hide the add post box
-  addPostBox.classList.add('hidden');
-
-  // Save post to local storage
-  savePost(currentUser, postContent);
-});
-
-// Helper function to create a post element
-function createPostElement(username, content) {
-  const post = document.createElement('div');
-  post.classList.add('post');
-  post.innerHTML = `<strong>${username}:</strong> ${content}`;
-  return post;
-}
-
-// Function to save post in local storage
-function savePost(username, content) {
-  let posts = JSON.parse(localStorage.getItem('posts')) || [];
-  posts.push({ username, content });
-  localStorage.setItem('posts', JSON.stringify(posts));
-}
-
-// Function to load posts on page load
-function loadPosts() {
-  let posts = JSON.parse(localStorage.getItem('posts')) || [];
-  posts.forEach(post => {
-    const postElement = createPostElement(post.username, post.content);
-    communityPostsList.appendChild(postElement.cloneNode(true));
-    if (post.username === currentUser) {
-      myPostsList.appendChild(postElement);
+        // Show community posts by default
+        showCommunityPosts();
+    } else {
+        alert("Please enter a username and password.");
     }
-  });
 }
 
-document.addEventListener('DOMContentLoaded', loadPosts);
+// Show community posts
+function showCommunityPosts() {
+    document.getElementById("community-posts").style.display = "block";
+    document.getElementById("my-posts").style.display = "none";
+    displayCommunityPosts(); // Display community posts
+}
+
+// Show my posts
+function showMyPosts() {
+    document.getElementById("community-posts").style.display = "none";
+    document.getElementById("my-posts").style.display = "block";
+    displayMyPosts(); // Display user's posts
+}
+
+// Show post form
+function showPostForm() {
+    document.getElementById("post-form").style.display = "flex";
+    document.getElementById("new-post-content").value = ""; // Clear previous text
+}
+
+// Cancel post
+function cancelPost() {
+    document.getElementById("post-form").style.display = "none";
+}
+
+// Submit post
+function submitPost() {
+    const content = document.getElementById("new-post-content").value;
+
+    if (content) {
+        // Add post to posts
+        posts.push({ username: currentUser || "Anonymous", content });
+
+        // After submission, refresh the posts display in both sections
+        displayCommunityPosts();
+        displayMyPosts();
+
+        // Hide the post form after submission
+        document.getElementById("post-form").style.display = "none";
+    } else {
+        alert("Please enter some content to post.");
+    }
+}
+
+// Display community posts (No Edit/Delete options here)
+function displayCommunityPosts() {
+    const communityPostsSection = document.getElementById("community-posts");
+    communityPostsSection.innerHTML = '<h2>Community Posts</h2>';
+
+    posts.forEach(post => {
+        const postElement = `
+            <div class="post">
+                <h3>Username: ${post.username}</h3>
+                <p>${post.content}</p>
+            </div>
+        `;
+        communityPostsSection.innerHTML += postElement;
+    });
+}
+
+// Display user's posts in "My Posts" (with Edit/Delete options)
+function displayMyPosts() {
+    const myPostsSection = document.getElementById("my-posts");
+    myPostsSection.innerHTML = '<h2>My Posts</h2><button class="add-post-btn" onclick="showPostForm()">Add Post+</button>';
+    
+    posts.forEach((post, index) => {
+        if (post.username === currentUser) {
+            const postElement = `
+                <div class="post">
+                    <h3>Username: ${post.username}</h3>
+                    <p>${post.content}</p>
+                    <button onclick="editPost(${index})">Edit</button>
+                    <button onclick="deletePost(${index})">Delete</button>
+                </div>
+            `;
+            myPostsSection.innerHTML += postElement;
+        }
+    });
+}
+
+// Edit post
+function editPost(index) {
+    const post = posts[index];
+    document.getElementById("new-post-content").value = post.content; // Load content into post form
+    showPostForm(); // Show form for editing
+
+    // Remove the post from posts array (this is a workaround for now)
+    posts.splice(index, 1);
+}
+
+// Delete post
+function deletePost(index) {
+    posts.splice(index, 1);
+    displayMyPosts(); // Refresh user's posts after deletion
+    displayCommunityPosts(); // Refresh community posts after deletion
+}
