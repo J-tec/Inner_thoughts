@@ -1,5 +1,5 @@
-// Sample posts data
-let posts = [];
+// Sample posts data stored in localStorage
+let posts = JSON.parse(localStorage.getItem("posts")) || [];
 let currentUser = null;
 
 // Simulate login
@@ -51,8 +51,9 @@ function submitPost() {
     const content = document.getElementById("new-post-content").value;
 
     if (content) {
-        // Add post to posts
+        // Add post to posts and save to localStorage
         posts.push({ username: currentUser || "Anonymous", content });
+        localStorage.setItem("posts", JSON.stringify(posts));
 
         // After submission, refresh the posts display in both sections
         displayCommunityPosts();
@@ -109,11 +110,13 @@ function editPost(index) {
 
     // Remove the post from posts array (this is a workaround for now)
     posts.splice(index, 1);
+    localStorage.setItem("posts", JSON.stringify(posts)); // Save to localStorage
 }
 
 // Delete post
 function deletePost(index) {
     posts.splice(index, 1);
+    localStorage.setItem("posts", JSON.stringify(posts)); // Save to localStorage
     displayMyPosts(); // Refresh user's posts after deletion
     displayCommunityPosts(); // Refresh community posts after deletion
 }
